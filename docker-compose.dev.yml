@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ragol
+      POSTGRES_PASSWORD: ragol
+      POSTGRES_DB: ragol
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ragol"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile.dev
+    env_file: apps/api/.env
+    environment:
+      DATABASE_URL: postgres://ragol:ragol@postgres:5432/ragol
+      NODE_ENV: development
+      UPLOAD_DIR: /uploads
+    volumes:
+      - ./apps/api/src:/app/apps/api/src
+      - ./packages/types/src:/app/packages/types/src
+      - uploads_data:/uploads
+    ports:
+      - "3000:3000"
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.dev
+    volumes:
+      - ./apps/web/src:/app/apps/web/src
+      - ./apps/web/public:/app/apps/web/public
+    ports:
+      - "5173:5173"
+    networks:
+      - internal
+    environment:
+      - VITE_API_URL=http://localhost:3000
+
+volumes:
+  postgres_data:
+  uploads_data:
+
+networks:
+  internal:
+    driver: bridge
