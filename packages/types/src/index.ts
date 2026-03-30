@@ -21,7 +21,7 @@ export interface Document {
   document_set_id: number;
   user_id: number;
   original_name: string;
-  file_path: string;
+  file_path: string | null;
   file_type: string;
   status: 'pending' | 'processing' | 'done' | 'error';
   chunk_count: number | null;

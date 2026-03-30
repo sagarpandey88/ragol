@@ -9,6 +9,7 @@ import { chunkText } from '../services/chunker';
 import { embedTexts } from '../services/embedder';
 import { upsertVectors } from '../services/pinecone';
 
+
 const router = Router({ mergeParams: true });
 router.use(authenticateJWT);
 
@@ -33,15 +34,17 @@ router.post('/', upload.array('files', 20), async (req: Request, res: Response):
         setId,
         req.user!.id,
         f.originalname,
-        f.path,
+        f.buffer,
         path.extname(f.originalname).toLowerCase().replace('.', '')
       )
     )
   );
 
-  // Kick off vectorization asynchronously
-  for (const doc of created) {
-    vectorizeDocument(doc.id, req.user!.id, docSet.id, doc.file_path, doc.file_type).catch((err) => {
+  // Kick off vectorization asynchronously (pass the in-memory buffer directly)
+  for (let i = 0; i < created.length; i++) {
+    const doc = created[i];
+    const buffer = files[i].buffer;
+    vectorizeDocument(doc.id, req.user!.id, docSet.id, buffer, doc.file_type).catch((err) => {
       console.error(`Vectorization failed for doc ${doc.id}:`, err);
       updateDocumentStatus(doc.id, 'error').catch(() => {});
     });
@@ -64,12 +67,12 @@ async function vectorizeDocument(
   documentId: number,
   userId: number,
   documentSetId: number,
-  filePath: string,
+  fileData: Buffer,
   fileType: string
 ): Promise<void> {
   await updateDocumentStatus(documentId, 'processing');
 
-  const text = await parseFile(filePath, fileType);
+  const text = await parseFile(fileData, fileType);
   const chunks = chunkText(text);
   const embeddings = await embedTexts(chunks);
 

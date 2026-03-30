@@ -1,38 +1,15 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: ragol
-      POSTGRES_PASSWORD: ragol
-      POSTGRES_DB: ragol
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - internal
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ragol"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   api:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
     env_file: apps/api/.env
     environment:
-      DATABASE_URL: postgres://ragol:ragol@postgres:5432/ragol
       NODE_ENV: production
-      UPLOAD_DIR: /uploads
-    volumes:
-      - uploads_data:/uploads
     ports:
       - "3000:3000"
     networks:
       - internal
-    depends_on:
-      postgres:
-        condition: service_healthy
 
   web:
     build:
@@ -44,10 +21,6 @@ services:
       - internal
     depends_on:
       - api
-
-volumes:
-  postgres_data:
-  uploads_data:
 
 networks:
   internal:

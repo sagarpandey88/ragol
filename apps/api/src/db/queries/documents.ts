@@ -5,15 +5,23 @@ export async function createDocument(
   documentSetId: number,
   userId: number,
   originalName: string,
-  filePath: string,
+  fileData: Buffer,
   fileType: string
 ): Promise<Document> {
   const { rows } = await pool.query<Document>(
-    `INSERT INTO documents (document_set_id, user_id, original_name, file_path, file_type)
-     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-    [documentSetId, userId, originalName, filePath, fileType]
+    `INSERT INTO documents (document_set_id, user_id, original_name, file_data, file_type)
+     VALUES ($1, $2, $3, $4, $5) RETURNING id, document_set_id, user_id, original_name, file_type, status, chunk_count, created_at`,
+    [documentSetId, userId, originalName, fileData, fileType]
   );
   return rows[0];
+}
+
+export async function getDocumentFileData(id: number, userId: number): Promise<Buffer | null> {
+  const { rows } = await pool.query<{ file_data: Buffer }>(
+    'SELECT file_data FROM documents WHERE id = $1 AND user_id = $2',
+    [id, userId]
+  );
+  return rows[0]?.file_data ?? null;
 }
 
 export async function getDocumentsBySet(documentSetId: number, userId: number): Promise<Document[]> {

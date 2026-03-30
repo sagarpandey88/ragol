@@ -1,32 +1,26 @@
-import fs from 'fs/promises';
-import path from 'path';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 import { parse as csvParse } from 'csv-parse/sync';
 import * as XLSX from 'xlsx';
 
-export async function parseFile(filePath: string, fileType: string): Promise<string> {
-  const ext = path.extname(filePath).toLowerCase().replace('.', '');
-
-  if (ext === 'pdf') {
-    const buffer = await fs.readFile(filePath);
-    const data = await pdfParse(buffer);
+export async function parseFile(fileData: Buffer, fileType: string): Promise<string> {
+  if (fileType === 'pdf') {
+    const data = await pdfParse(fileData);
     return data.text;
   }
 
-  if (ext === 'docx') {
-    const { value } = await mammoth.extractRawText({ path: filePath });
+  if (fileType === 'docx') {
+    const { value } = await mammoth.extractRawText({ buffer: fileData });
     return value;
   }
 
-  if (ext === 'csv') {
-    const content = await fs.readFile(filePath, 'utf8');
-    const records = csvParse(content, { skip_empty_lines: true }) as string[][];
+  if (fileType === 'csv') {
+    const records = csvParse(fileData.toString('utf8'), { skip_empty_lines: true }) as string[][];
     return records.map((row) => row.join('\t')).join('\n');
   }
 
-  if (ext === 'xlsx') {
-    const workbook = XLSX.readFile(filePath);
+  if (fileType === 'xlsx') {
+    const workbook = XLSX.read(fileData, { type: 'buffer' });
     const lines: string[] = [];
     for (const sheetName of workbook.SheetNames) {
       const sheet = workbook.Sheets[sheetName];
@@ -37,5 +31,5 @@ export async function parseFile(filePath: string, fileType: string): Promise<str
   }
 
   // txt, md, and anything else
-  return fs.readFile(filePath, 'utf8');
+  return fileData.toString('utf8');
 }
