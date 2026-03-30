@@ -1,5 +1,5 @@
 services:
-  api:
+  app:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -10,17 +10,6 @@ services:
       - "3000:3000"
     networks:
       - internal
-
-  web:
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
-    ports:
-      - "80:80"
-    networks:
-      - internal
-    depends_on:
-      - api
 
 networks:
   internal:

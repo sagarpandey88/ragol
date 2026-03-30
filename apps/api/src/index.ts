@@ -1,4 +1,6 @@
 import 'dotenv/config';
+import path from 'path';
+import fs from 'fs';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -39,6 +41,14 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   console.error(err);
   res.status(500).json({ error: 'Internal server error' });
 });
+
+// Serve React SPA static assets (production single-container mode)
+const staticDir = process.env.STATIC_DIR ?? path.join(__dirname, '..', 'public');
+if (fs.existsSync(staticDir)) {
+  app.use(express.static(staticDir));
+  // SPA fallback — all non-API routes return index.html
+  app.get('*', (_req, res) => res.sendFile(path.join(staticDir, 'index.html')));
+}
 
 async function main() {
   await runMigrations();

@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "pnpm --parallel -r dev",
     "build": "pnpm -r build",
-    "lint": "pnpm -r lint"
+    "lint": "pnpm -r lint",
+    "docker:start": "docker-compose -f docker-compose.dev.yml up -d"
   },
   "devDependencies": {
     "typescript": "^5.4.5"
@@ -15,6 +16,10 @@
     "pnpm": ">=9"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "protobufjs", "sharp"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "protobufjs",
+      "sharp"
+    ]
   }
 }
