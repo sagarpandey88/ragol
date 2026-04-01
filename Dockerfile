@@ -14,7 +14,7 @@ WORKDIR /app/apps/web
 RUN pnpm build
 
 # ── Stage 2: compile the TypeScript API ──────────────────────────────────────
-FROM node:20-alpine AS api-builder
+FROM node:20-bullseye-slim AS api-builder
 RUN npm install -g pnpm
 
 WORKDIR /app
@@ -31,7 +31,7 @@ WORKDIR /app/apps/api
 RUN pnpm build
 
 # ── Stage 3: production runner ────────────────────────────────────────────────
-FROM node:20-alpine AS runner
+FROM node:20-bullseye-slim AS runner
 RUN npm install -g pnpm
 
 WORKDIR /app
@@ -46,6 +46,8 @@ COPY packages/types ./packages/types
 
 # Web static assets served by Express
 COPY --from=web-builder /app/apps/web/dist ./apps/api/public
+# Include SQL migrations (not emitted to dist by TypeScript build)
+COPY apps/api/src/db/migrations ./apps/api/dist/db/migrations
 
-EXPOSE 3000
+EXPOSE 80
 CMD ["node", "apps/api/dist/index.js"]

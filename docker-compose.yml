@@ -2,12 +2,13 @@ services:
   app:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
+      dockerfile: Dockerfile
     env_file: apps/api/.env
     environment:
       NODE_ENV: production
+      PORT: "80"
     ports:
-      - "3000:3000"
+      - "3000:80"
     networks:
       - internal
 
